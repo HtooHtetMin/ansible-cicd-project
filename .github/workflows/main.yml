@@ -1,0 +1,53 @@
+---
+name: Build, Push and Deploy
+
+env:
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+  
+  SSH_HOST: ${{ vars.SSH_HOST }}
+  SSH_USERNAME: ${{ vars.SSH_USERNAME }}
+  IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+  DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Login to DockerHub 
+        run: |
+          echo $DOCKER_TOKEN | docker login -u $DOCKERHUB_USERNAME --password-stdin
+
+      - name: Build Docker IMAGE 
+        run: docker build -t $IMAGE_NAME:latest .
+
+      - name: Push Docker image 
+        run: docker puch $IMAGE_NAME:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create SSH key 
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private.key
+          chmod 600 private.key 
+          eval 'ssh-agent -s'
+          ssh-add private.key
+          mkdir -p ~/.ssh
+          touch ~/.ssh/know_hosts
+          chmod 644 ~/.ssh/know_hosts
+          ssh-keyscan $SSH_HOST >> ~/.ssh/know_hosts
+          

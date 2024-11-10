@@ -1,18 +1,17 @@
 ---
-- name: Deploy Netx.js Docker container
+- name: Deploy Next.js Docker container
   hosts: all
-  become: yes #Run as root
+  become: yes  # Run as root
 
-  #define the variable name
   vars: 
     IMAGE_NAME: "{{ image_name }}"
     CONTAINER_NAME: "{{ container_name }}"
     DOCKERHUB_USERNAME: "{{ dockerhub_username }}"
     DOCKERHUB_TOKEN: "{{ dockerhub_token }}"
     DOMAIN_NAME: "{{ domain }}"
-    NGINX_CONFIG_FILE: /etc/nginx/sites-available/{{ DOMAIN_NAME }}.conf
-    NGINX_ENABLED_FILE: /etc/nginx/sites-enable/{{ DDOMAIN_NAME }}.conf
-    # ENABLE_SSL: if "{{ enable_ssl }}" == "true" else false
+    NGINX_CONFIG_FILE: "/etc/nginx/sites-available/{{ DOMAIN_NAME }}.conf"
+    NGINX_ENABLED_FILE: "/etc/nginx/sites-enabled/{{ DOMAIN_NAME }}.conf"
+    ENABLE_SSL: "{{ enable_ssl | default(false) | bool }}"
     APP_PORT: 3001
 
   tasks:
@@ -49,19 +48,19 @@
         state: started
         enabled: yes
 
-    - name: Install Cerbot and Nginx plugin
+    - name: Install Certbot and Nginx plugin
       apt:
-        name: {{ item }}
+        name: "{{ item }}"
         state: present
       when: ENABLE_SSL
-      with_items:
+      loop:
         - certbot
         - python3-certbot-nginx
 
     - name: Login to DockerHub with token
       docker_login:
         username: "{{ DOCKERHUB_USERNAME }}"
-        password: "{{ DOCKERHUB_TOKEN  }}"
+        password: "{{ DOCKERHUB_TOKEN }}"
 
     - name: Pull Docker image 
       docker_image:
@@ -77,13 +76,9 @@
         ports:
           - "{{ APP_PORT }}:3000"
         env: 
-          - NODE_ENV=production
-          - PORT=3000
+          NODE_ENV: production
+          PORT: 3000
 
-        # volumes:
-        #   - /app/node_modules
-        #   - /app/.next
-          
     - name: Wait for Docker container to start
       wait_for:
         host: localhost
@@ -91,37 +86,31 @@
         delay: 5
         timeout: 60
 
-
     - name: Check if Nginx configuration exists 
       stat:
-        path: "{{ NNGINX_CONFIG_FILE }}"
+        path: "{{ NGINX_CONFIG_FILE }}"
       register: nginx_config 
-
 
     - name: Copy Nginx Configuration 
       template:
         src: nginx.conf.j2
-        dest: /etc/nginx/sites-available/{{ DOMAIN_NAME }}.conf
-      when: not nginx_config.state.exists
+        dest: "{{ NGINX_CONFIG_FILE }}"
+      when: not nginx_config.stat.exists
 
     - name: Enable Nginx configuration
       file:
         src: "{{ NGINX_CONFIG_FILE }}"
         dest: "{{ NGINX_ENABLED_FILE }}"
         state: link
-      when: not nginx_config.state.exists
+      when: not nginx_config.stat.exists
       notify: Restart Nginx
 
-
-    # - name: Install SSL certificate
-    #   command: "certbot --nginx -d {{ DOMAIN_NAME }} -n --agree-tos --email {{ email }}"
-    #   when: ENABLE_SSL
+    - name: Install SSL certificate
+      command: "certbot --nginx -d {{ DOMAIN_NAME }} -n --agree-tos --email {{ email }}"
+      when: ENABLE_SSL
 
   handlers: 
     - name: Restart Nginx
       service:
         name: nginx
         state: reloaded
-    
-      
-        

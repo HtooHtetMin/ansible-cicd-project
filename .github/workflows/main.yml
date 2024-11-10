@@ -1,14 +1,5 @@
 name: Build, Push and Deploy
-  # SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-  # DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-  # DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-  
-  # SSH_HOST: ${{ vars.SSH_HOST }}
-  # SSH_USERNAME: ${{ vars.SSH_USERNAME }}
-  # DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}
-  # VERSION: ${{ github.run_number }}
-  # DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
-  # ENABLE_SSL: ${{ vars.ENABLE_SSL }}
+
 env:
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -38,7 +29,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-        
+      
+      - name: Debug - Check DOCKER_REPO and VERSION
+        run: |
+          echo "DOCKER_REPO: ${{ env.DOCKER_REPO }}"
+          echo "VERSION: ${{ env.VERSION }}"
+
+
       - name: Build and push Docker images
         uses: docker/build-push-action@v6
         with:

@@ -12,7 +12,7 @@
     DOMAIN_NAME: "{{ domain }}"
     NGINX_CONFIG_FILE: /etc/nginx/sites-available/{{ DOMAIN_NAME }}.conf
     NGINX_ENABLED_FILE: /etc/nginx/sites-enable/{{ DDOMAIN_NAME }}.conf
-    ENABLE_SSL: if "{{ enable_ssl }}" == "true" else false
+    # ENABLE_SSL: if "{{ enable_ssl }}" == "true" else false
     APP_PORT: 3001
 
   tasks:
@@ -113,9 +113,9 @@
       notify: Restart Nginx
 
 
-    - name: Install SSL certificate
-      command: "certbot --nginx -d {{ DOMAIN_NAME }} -n --agree-tos --email {{ email }}"
-      when: ENABLE_SSL
+    # - name: Install SSL certificate
+    #   command: "certbot --nginx -d {{ DOMAIN_NAME }} -n --agree-tos --email {{ email }}"
+    #   when: ENABLE_SSL
 
   handlers: 
     - name: Restart Nginx

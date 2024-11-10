@@ -25,7 +25,7 @@
     - name: APT update
       apt:
         update_cache: yes
-        
+  #need to open the docker desktop      
     - name: Install Docker
       apt:
         name: docker.io

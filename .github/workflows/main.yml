@@ -70,3 +70,4 @@ jobs:
             --extra-vars "dockerhub_token=$DOCKERHUB_TOKEN" \
             --extra-vars "enable_ssl=$ENABLE_SSL" \
             devops/playbook.yml
+#error on docker tocken

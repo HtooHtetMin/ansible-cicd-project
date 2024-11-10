@@ -25,6 +25,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Debug - Check IMAGE_NAME
+        run: echo "IMAGE_NAME is: $IMAGE_NAME"
+        # This step prints the IMAGE_NAME value to verify it's correctly set
+
       - name: Login to DockerHub 
         run: |
           echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -70,4 +74,6 @@ jobs:
             --extra-vars "dockerhub_token=$DOCKERHUB_TOKEN" \
             --extra-vars "enable_ssl=$ENABLE_SSL" \
             devops/playbook.yml
+
 #error on docker tocken
+#error on docker image

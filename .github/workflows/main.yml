@@ -6,7 +6,7 @@ env:
   SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-
+  
   SSH_HOST: ${{ vars.SSH_HOST }}
   SSH_USERNAME: ${{ vars.SSH_USERNAME }}
   DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}
@@ -55,8 +55,6 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > private.key
           chmod 600 private.key
 
-
-
       - name: Setup Ansible
         run: |
           echo "[defaults]" > ansible.cfg
@@ -65,7 +63,8 @@ jobs:
           echo "private_key_file = private.key" >> ansible.cfg
           echo "host_key_checking = False" >> ansible.cfg
           echo "interpreter_python = auto_silent" >> ansible.cfg
-          echo "server ansible_host=$SSH_HOST" > inventory
+          echo "[servers]" > inventory
+          echo "Server ansible_host=$SSH_HOST ansible_user=$SSH_USERNAME ansible_ssh_private_key_file=private.key" >> inventory
 
       - name: Install Ansible roles
         run: |
@@ -74,11 +73,11 @@ jobs:
       - name: Run Ansible playbook
         run: |
           ansible-playbook -i inventory \
-            --extra-vars "image_name=$DOCKER_REPO:$VERSION" \
-            --extra-vars "domain_name=$DOMAIN_NAME" \
-            --extra-vars "dockerhub_username=$DOCKERHUB_USERNAME" \
-            --extra-vars "dockerhub_token=$DOCKERHUB_TOKEN" \
-            --extra-vars "enable_ssl=$ENABLE_SSL" \
+            --extra-vars "image_name=${{ env.DOCKER_REPO }}:${{ env.VERSION }}" \
+            --extra-vars "domain_name=${{ env.DOMAIN_NAME }}" \
+            --extra-vars "dockerhub_username=${{ env.DOCKERHUB_USERNAME }}" \
+            --extra-vars "dockerhub_token=${{ secrets.DOCKERHUB_TOKEN }}" \
+            --extra-vars "enable_ssl=${{ env.ENABLE_SSL }}" \
             devops/playbook.yml
 
 #error on docker tocken

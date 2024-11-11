@@ -16,29 +16,21 @@
     email: "htoohtet102833@gmail.com"  # Ensure you have an email variable defined for Certbot
 
   tasks:
-    - name: Configure Swap if not configured
-      include_role:
-        name: geerlingguy.swap
-      vars:
-        swap_file_size_mb: 1024
-        swap_swappiness: 10
-      when: ansible_swaptotal_mb < 1024
-
-    - name: Check if swap is currently active
-      command: free | grep -i swap | awk '{print $3}'
-      register: swap_usage
+    - name: Check for active swap devices
+      command: swapon --show
+      register: swap_devices
       changed_when: false
 
-    - name: Check swap usage before disabling
+    - name: Debug active swap devices
       debug:
-        msg: "Swap is currently in use: {{ swap_usage.stdout }}"
-      when: swap_usage.stdout | int > 0
+        msg: "{{ swap_devices.stdout_lines }}"
 
-    - name: Disable swap if in use
-      command: swapoff -a
-      when: swap_usage.stdout | int > 0
-      timeout: 600  # Increase timeout to 10 minutes to give more time
-      ignore_errors: yes  # Skip swapoff failure and continue
+    - name: Disable swap (if exists)
+      command: swapoff {{ item }}
+      loop: "{{ swap_devices.stdout_lines }}"
+      when: swap_devices.stdout_lines | length > 0
+      ignore_errors: yes
+      timeout: 600  # Increase timeout to 10 minutes
 
     - name: APT update
       apt:

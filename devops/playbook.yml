@@ -13,6 +13,7 @@
     NGINX_ENABLED_FILE: "/etc/nginx/sites-enabled/{{ DOMAIN_NAME }}.conf"
     ENABLE_SSL: "{{ enable_ssl | default(false) | bool }}"
     APP_PORT: 3001
+    email: "htoohtet102833@gmail.com"  # Ensure you have an email variable defined for Certbot
 
   tasks:
     - name: Configure Swap
@@ -21,11 +22,12 @@
       vars:
         swap_file_size_mb: 1024
         swap_swappiness: 10
+      timeout: 120  # Increase timeout for swapoff if needed
 
     - name: APT update
       apt:
         update_cache: yes
-  #need to open the docker desktop      
+    
     - name: Install Docker
       apt:
         name: docker.io

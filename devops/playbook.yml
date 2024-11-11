@@ -44,9 +44,14 @@
         cache_valid_time: 3600
       when: ansible_facts.packages['docker.io'] is not defined or ansible_facts.packages['nginx'] is not defined
 
+    - name: Get Ubuntu version codename
+      command: lsb_release -c
+      register: ubuntu_version
+      changed_when: false
+
     - name: Add Docker repository
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ubuntu_version.stdout | regex_replace('Codename:\\s+(.*)', '\\1') }} stable"
         state: present
         filename: "docker"
 

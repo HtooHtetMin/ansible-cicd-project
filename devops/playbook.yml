@@ -32,20 +32,35 @@
       ignore_errors: yes
       timeout: 600  # Increase timeout to 10 minutes
 
-    - name: APT update
+    - name: Remove containerd if present
+      apt:
+        name: containerd
+        state: absent
+      ignore_errors: yes
+
+    - name: Update APT repository and install necessary packages
       apt:
         update_cache: yes
-    
-    - name: Install necessary packages
-      apt:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - docker.io
-        - nginx
+        cache_valid_time: 3600
       when: ansible_facts.packages['docker.io'] is not defined or ansible_facts.packages['nginx'] is not defined
 
-    - name: Start Docker service 
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        state: present
+        filename: "docker"
+
+    - name: Install Docker from official repository
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Start Docker service
       service:
         name: docker
         state: started 

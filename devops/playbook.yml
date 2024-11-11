@@ -1,11 +1,10 @@
 ---
 - name: Deploy Next.js Docker container
   hosts: all
-  become: yes  # Run as root
+  become: yes
 
-  vars: 
+  vars:
     IMAGE_NAME: "{{ image_name }}"
-    CONTAINER_NAME: "{{ container_name }}"
     DOCKERHUB_USERNAME: "{{ dockerhub_username }}"
     DOCKERHUB_TOKEN: "{{ dockerhub_token }}"
     DOMAIN_NAME: "{{ domain }}"
@@ -13,42 +12,39 @@
     NGINX_ENABLED_FILE: "/etc/nginx/sites-enabled/{{ DOMAIN_NAME }}.conf"
     ENABLE_SSL: "{{ enable_ssl | default(false) | bool }}"
     APP_PORT: 3001
-    email: "htoohtet102833@gmail.com"  # Ensure you have an email variable defined for Certbot
+    email: "htoohtet102833@gmail.com"
 
   tasks:
-    - name: Configure Swap
+    - name: Configure Swap if not configured
       include_role:
         name: geerlingguy.swap
       vars:
         swap_file_size_mb: 1024
         swap_swappiness: 10
-      timeout: 120  # Increase timeout for swapoff if needed
+      when: ansible_swaptotal_mb < 1024
 
-    - name: APT update
+    - name: Update APT cache if needed
       apt:
         update_cache: yes
-    
-    - name: Install Docker
-      apt:
-        name: docker.io
-        state: present
-    
-    - name: Start Docker service 
-      service:
-        name: docker
-        state: started 
-        enabled: yes
+      changed_when: false
 
-    - name: Install Nginx
+    - name: Install necessary packages
       apt:
-        name: nginx 
+        name: "{{ item }}"
         state: present
-    
-    - name: Enable and start Nginx 
+      loop:
+        - docker.io
+        - nginx
+      when: ansible_facts.packages['docker.io'] is not defined or ansible_facts.packages['nginx'] is not defined
+
+    - name: Ensure Docker and Nginx are running
       service:
-        name: nginx
+        name: "{{ item }}"
         state: started
         enabled: yes
+      loop:
+        - docker
+        - nginx
 
     - name: Install Certbot and Nginx plugin
       apt:
@@ -59,15 +55,15 @@
         - certbot
         - python3-certbot-nginx
 
-    - name: Login to DockerHub with token
+    - name: Login to DockerHub
       docker_login:
         username: "{{ DOCKERHUB_USERNAME }}"
         password: "{{ DOCKERHUB_TOKEN }}"
 
-    - name: Pull Docker image 
+    - name: Pull Docker image
       docker_image:
         name: "{{ IMAGE_NAME }}"
-        source: pull 
+        source: pull
 
     - name: Run Docker container
       docker_container:
@@ -77,23 +73,16 @@
         restart_policy: always
         ports:
           - "{{ APP_PORT }}:3000"
-        env: 
+        env:
           NODE_ENV: production
           PORT: 3000
 
-    - name: Wait for Docker container to start
-      wait_for:
-        host: localhost
-        port: "{{ APP_PORT }}"
-        delay: 5
-        timeout: 60
-
-    - name: Check if Nginx configuration exists 
+    - name: Check if Nginx configuration exists
       stat:
         path: "{{ NGINX_CONFIG_FILE }}"
-      register: nginx_config 
+      register: nginx_config
 
-    - name: Copy Nginx Configuration 
+    - name: Copy Nginx Configuration
       template:
         src: nginx.conf.j2
         dest: "{{ NGINX_CONFIG_FILE }}"
@@ -111,7 +100,7 @@
       command: "certbot --nginx -d {{ DOMAIN_NAME }} -n --agree-tos --email {{ email }}"
       when: ENABLE_SSL
 
-  handlers: 
+  handlers:
     - name: Restart Nginx
       service:
         name: nginx

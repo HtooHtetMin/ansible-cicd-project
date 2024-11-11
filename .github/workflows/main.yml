@@ -41,7 +41,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tag : ${{ env.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}:{{ env.VERSION }}
+          tags: ${{ env.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}:${{ env.VERSION }}
           cache-from: type=registry,ref=${{ env.DOCKER_REPO }}:latest
           cache-to: type=inline
 

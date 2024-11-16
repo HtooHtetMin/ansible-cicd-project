@@ -6,7 +6,7 @@ env:
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   SSH_HOST: ${{ vars.SSH_HOST }}
   SSH_USERNAME: ${{ vars.SSH_USERNAME }}
-  DOCKER_REPO: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}
+  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}
   VERSION: ${{ github.run_number }}
   DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
   ENABLE_SSL: ${{ vars.ENABLE_SSL }}
@@ -80,9 +80,9 @@ jobs:
       - name: Run Ansible playbook
         run: |
           ansible-playbook -i inventory \
-            --extra-vars "image_name=${{ vars.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}:${{ github.run_number }}" \
+            --extra-vars "image_name=${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}:${{ github.run_number }}" \
             --extra-vars "domain_name=${{ vars.DOMAIN_NAME }}" \
-            --extra-vars "dockerhub_username=${{ vars.DOCKERHUB_USERNAME }}" \
+            --extra-vars "dockerhub_username=${{ secrets.DOCKERHUB_USERNAME }}" \
             --extra-vars "dockerhub_token=${{ secrets.DOCKERHUB_TOKEN }}" \
             --extra-vars "enable_ssl=${{ vars.ENABLE_SSL }}" \
             devops/playbook.yml

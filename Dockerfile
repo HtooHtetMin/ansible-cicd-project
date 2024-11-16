@@ -29,5 +29,9 @@ EXPOSE 3000
 #Start the app
 CMD [ "npm", "start" ]
 
+#Instruction to build the image
+#docker build -t nextjs-app .
+#docker run -p 3000:3000 -d --restart=always --name nextjs-app nextjs-app
+
 
 

@@ -5,7 +5,7 @@ server {
 
     #proxy requests to the Next.js app
     location / {
-        proxy_pass http://{{ app_name }}:3001;
+        proxy_pass http://localhost:{{ APP_PORT }};
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;

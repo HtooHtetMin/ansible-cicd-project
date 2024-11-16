@@ -17,7 +17,7 @@
 
   tasks:
     - name: Check for active swap devices
-      command: swapon --show
+      shell: "swapon --show | awk 'NR>1 {print $1}'"
       register: swap_devices
       changed_when: false
 
@@ -30,7 +30,6 @@
       loop: "{{ swap_devices.stdout_lines }}"
       when: swap_devices.stdout_lines | length > 0
       ignore_errors: yes
-      timeout: 600  # Increase timeout to 10 minutes
 
     - name: Remove containerd if present
       apt:
@@ -42,10 +41,9 @@
       apt:
         update_cache: yes
         cache_valid_time: 3600
-      when: ansible_facts.packages['docker.io'] is not defined or ansible_facts.packages['nginx'] is not defined
 
     - name: Get Ubuntu version codename
-      command: lsb_release -c
+      shell: lsb_release -c | awk '{print $2}'
       register: ubuntu_version
       changed_when: false
 
@@ -62,13 +60,16 @@
 
     - name: Add Docker repository
       apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ubuntu_version.stdout | regex_replace('Codename:\\s+(.*)', '\\1') }} stable"
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ubuntu_version.stdout }} stable"
         state: present
         filename: "docker"
 
     - name: Install Docker from official repository
       apt:
-        name: docker-ce
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
         state: present
 
     - name: Install Nginx
@@ -79,10 +80,10 @@
     - name: Start Docker service
       service:
         name: docker
-        state: started 
+        state: started
         enabled: yes
 
-    - name: Enable and start Nginx 
+    - name: Enable and start Nginx
       service:
         name: nginx
         state: started
@@ -102,20 +103,20 @@
         username: "{{ DOCKERHUB_USERNAME }}"
         password: "{{ DOCKERHUB_TOKEN }}"
 
-    - name: Pull Docker image 
+    - name: Pull Docker image
       docker_image:
         name: "{{ IMAGE_NAME }}"
-        source: pull 
+        source: pull
 
     - name: Run Docker container
       docker_container:
-        name: "{{ DOMAIN_NAME }}"
+        name: "{{ CONTAINER_NAME }}"
         image: "{{ IMAGE_NAME }}"
         state: started
         restart_policy: always
         ports:
           - "{{ APP_PORT }}:3000"
-        env: 
+        env:
           NODE_ENV: production
           PORT: 3000
 
@@ -126,12 +127,12 @@
         delay: 5
         timeout: 60
 
-    - name: Check if Nginx configuration exists 
+    - name: Check if Nginx configuration exists
       stat:
         path: "{{ NGINX_CONFIG_FILE }}"
-      register: nginx_config 
+      register: nginx_config
 
-    - name: Copy Nginx Configuration 
+    - name: Copy Nginx Configuration
       template:
         src: nginx.conf.j2
         dest: "{{ NGINX_CONFIG_FILE }}"
@@ -149,7 +150,7 @@
       command: "certbot --nginx -d {{ DOMAIN_NAME }} -n --agree-tos --email {{ email }}"
       when: ENABLE_SSL
 
-  handlers: 
+  handlers:
     - name: Restart Nginx
       service:
         name: nginx

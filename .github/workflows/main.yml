@@ -6,7 +6,7 @@ env:
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   SSH_HOST: ${{ vars.SSH_HOST }}
   SSH_USERNAME: ${{ vars.SSH_USERNAME }}
-  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}
+  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/nextjs-app
   VERSION: ${{ github.run_number }}
   DOMAIN_NAME: ${{ vars.DOMAIN_NAME }}
   ENABLE_SSL: ${{ vars.ENABLE_SSL }}
@@ -44,8 +44,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ env.DOCKERHUB_USERNAME }}/nextjs-app:${{ github.run_number }}
-          cache-from: type=registry,ref=${{ env.DOCKER_REPO }}:latest
+          tags: ${{ env.DOCKERHUB_USERNAME }}/nextjs-app:${{ github.run_number }}  # Make sure to use the version number here
+          cache-from: type=registry,ref=${{ env.DOCKER_REPO }}:latest  # Cache from the latest tag
           cache-to: type=inline
 
   deploy:
@@ -80,7 +80,7 @@ jobs:
       - name: Run Ansible playbook
         run: |
           ansible-playbook -i inventory \
-            --extra-vars "image_name=${{ secrets.DOCKERHUB_USERNAME }}/${{ vars.IMAGE_NAME }}:${{ github.run_number }}" \
+            --extra-vars "image_name=${{ secrets.DOCKERHUB_USERNAME }}/nextjs-app:${{ github.run_number }}" \
             --extra-vars "domain_name=${{ vars.DOMAIN_NAME }}" \
             --extra-vars "dockerhub_username=${{ secrets.DOCKERHUB_USERNAME }}" \
             --extra-vars "dockerhub_token=${{ secrets.DOCKERHUB_TOKEN }}" \

@@ -174,8 +174,13 @@
       command: "certbot --nginx -d {{ DOMAIN_NAME }} -n --agree-tos --email {{ email }}"
       when: ENABLE_SSL
 
-  handlers: 
-    - name: Restart Nginx
-      service:
-        name: nginx
-        state: reloaded
+  handlers:  
+    - name: Restart Nginx    
+      systemd:      
+        name: nginx      
+        state: reloaded      
+        enabled: yes    
+      register: nginx_reload_result    
+      retries: 3    
+      delay: 10    
+      until: nginx_reload_result is success

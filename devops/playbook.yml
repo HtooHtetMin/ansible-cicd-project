@@ -115,10 +115,22 @@
         username: "{{ DOCKERHUB_USERNAME }}"
         password: "{{ DOCKERHUB_TOKEN }}"
 
-    - name: Pull Docker image 
+    - name: Validate Docker image name format
+      assert:
+        that:
+          - IMAGE_NAME is defined
+          - IMAGE_NAME | regex_search('^[a-z0-9]+([._-][a-z0-9]+)*/[a-z0-9]+([._-][a-z0-9]+)*:[a-zA-Z0-9_.-]+$')
+        msg: "Invalid Docker image name: '{{ IMAGE_NAME }}'. Format should be '<username>/<repository>:<tag>'."
+
+    - name: Debug Docker image name
+      debug:
+        msg: "Pulling Docker image: {{ IMAGE_NAME }}"
+
+    - name: Pull Docker image
       docker_image:
         name: "{{ IMAGE_NAME }}"
-        source: pull 
+        source: pull
+
 
     - name: Run Docker container
       docker_container:

@@ -4,7 +4,7 @@
   become: yes  # Run as root
 
   vars:
-    IMAGE_NAME: "{{ image_name }}:latest" # or a specific tag like ':32'
+    IMAGE_NAME: "{{ image_name }}"  # Ensure no ":latest" is added by default
     CONTAINER_NAME: "{{ container_name }}"
     DOCKERHUB_USERNAME: "{{ dockerhub_username }}"
     DOCKERHUB_TOKEN: "{{ dockerhub_token }}"
@@ -130,7 +130,6 @@
       docker_image:
         name: "{{ IMAGE_NAME }}"
         source: pull
-
 
     - name: Run Docker container
       docker_container:

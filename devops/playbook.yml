@@ -141,8 +141,8 @@
         ports:
           - "{{ APP_PORT }}:3000"
         env: 
-          NODE_ENV: production
-          PORT: 3000
+          NODE_ENV: "production"  # Ensure this is a string
+          PORT: "3000"            # Ensure this is a string
 
     - name: Wait for Docker container to start
       wait_for:
